@@ -2,6 +2,12 @@
 // Runs on Facebook Marketplace, Craigslist, and OfferUp
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'ping') {
+    // Respond to ping to confirm content script is injected
+    sendResponse({ success: true });
+    return true;
+  }
+
   if (request.action === 'scrape') {
     // Use async function to handle image conversion
     (async () => {
@@ -30,8 +36,8 @@ async function imageToBase64(imgElement) {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      // Limit max size to reduce payload
-      const maxSize = 800;
+      // Limit max size to reduce payload (reduced from 800 to 600)
+      const maxSize = 600;
       let width = imgElement.naturalWidth;
       let height = imgElement.naturalHeight;
 
@@ -51,8 +57,8 @@ async function imageToBase64(imgElement) {
       // Draw image to canvas
       ctx.drawImage(imgElement, 0, 0, width, height);
 
-      // Convert to base64
-      const dataURL = canvas.toDataURL('image/jpeg', 0.7);
+      // Convert to base64 with reduced quality (0.5 instead of 0.7)
+      const dataURL = canvas.toDataURL('image/jpeg', 0.5);
 
       // Verify the result is valid
       if (!dataURL || !dataURL.startsWith('data:image')) {
@@ -398,42 +404,48 @@ async function scrapeFacebook() {
   let failedCount = 0;
 
   for (const img of images) {
-    // Skip small images, emojis, icons, and UI elements
-    if (!img.src ||
-        img.src.includes('emoji') ||
-        img.src.includes('icon') ||
-        img.naturalWidth < 100 ||
-        img.naturalHeight < 100) {
-      skippedCount++;
-      continue;
-    }
+    try {
+      // Skip small images, emojis, icons, and UI elements
+      if (!img.src ||
+          img.src.includes('emoji') ||
+          img.src.includes('icon') ||
+          img.naturalWidth < 100 ||
+          img.naturalHeight < 100) {
+        skippedCount++;
+        continue;
+      }
 
-    console.log(`Processing image ${base64Images.length + 1}: ${img.naturalWidth}x${img.naturalHeight}px from ${img.src.substring(0, 80)}...`);
+      console.log(`Processing image ${base64Images.length + 1}: ${img.naturalWidth}x${img.naturalHeight}px from ${img.src.substring(0, 80)}...`);
 
-    // Wait for image to load if needed
-    if (!img.complete) {
-      console.log('Image not loaded yet, waiting...');
-      await new Promise(resolve => {
-        img.onload = resolve;
-        img.onerror = resolve;
-        setTimeout(resolve, 2000); // Increased timeout to 2 seconds
-      });
-    }
+      // Wait for image to load if needed
+      if (!img.complete) {
+        console.log('Image not loaded yet, waiting...');
+        await new Promise(resolve => {
+          img.onload = resolve;
+          img.onerror = resolve;
+          setTimeout(resolve, 2000); // Increased timeout to 2 seconds
+        });
+      }
 
-    // Convert to base64
-    const base64 = await imageToBase64(img);
-    if (base64) {
-      console.log(`✓ Successfully converted image ${base64Images.length + 1}: ${img.naturalWidth}x${img.naturalHeight}px, base64 length: ${base64.length}`);
-      base64Images.push(base64);
-    } else {
-      console.error(`✗ Failed to convert image: ${img.src.substring(0, 100)}`);
+      // Convert to base64
+      const base64 = await imageToBase64(img);
+      if (base64) {
+        console.log(`✓ Successfully converted image ${base64Images.length + 1}: ${img.naturalWidth}x${img.naturalHeight}px, base64 length: ${base64.length}`);
+        base64Images.push(base64);
+      } else {
+        console.error(`✗ Failed to convert image: ${img.src.substring(0, 100)}`);
+        failedCount++;
+      }
+
+      // Limit to 6 images max to avoid huge payloads (reduced from 10)
+      if (base64Images.length >= 6) {
+        console.log('Reached 6 image limit, stopping conversion');
+        break;
+      }
+    } catch (error) {
+      console.error(`✗ Exception processing image: ${error.message}`);
       failedCount++;
-    }
-
-    // Limit to 10 images max to avoid huge payloads
-    if (base64Images.length >= 10) {
-      console.log('Reached 10 image limit, stopping conversion');
-      break;
+      // Continue to next image instead of crashing
     }
   }
 

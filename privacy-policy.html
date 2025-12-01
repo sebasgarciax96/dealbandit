@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - Deal Bandit</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #333;
+    }
+    h1 {
+      color: #1F2937;
+      border-bottom: 3px solid #F97316;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #374151;
+      margin-top: 30px;
+    }
+    .last-updated {
+      color: #6B7280;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    ul {
+      margin: 15px 0;
+    }
+    li {
+      margin: 8px 0;
+    }
+    .highlight {
+      background-color: #FEF3C7;
+      padding: 15px;
+      border-left: 4px solid #F59E0B;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="last-updated">Last Updated: December 1, 2025</p>
+
+  <h2>Introduction</h2>
+  <p>
+    Deal Bandit ("we", "our", or "the Extension") is committed to protecting your privacy.
+    This Privacy Policy explains how we collect, use, and safeguard your information when you use our Chrome extension.
+  </p>
+
+  <div class="highlight">
+    <strong>Key Point:</strong> We do not collect, store, or transmit your personal data to any external servers.
+    All data processing happens locally in your browser.
+  </div>
+
+  <h2>Information We Collect</h2>
+  <p>Deal Bandit collects and stores the following information locally in your browser:</p>
+  <ul>
+    <li><strong>API Keys:</strong> Your OpenAI and SerpApi keys (if provided) are stored locally in Chrome's storage.</li>
+    <li><strong>Usage Statistics:</strong> Number of product analyses performed (for freemium model).</li>
+    <li><strong>Account Information:</strong> Email address (if you create an account for unlimited analyses).</li>
+    <li><strong>Analysis History:</strong> Previously analyzed products and results (stored locally).</li>
+  </ul>
+
+  <h2>How We Use Your Information</h2>
+  <p>Your information is used solely for:</p>
+  <ul>
+    <li>Analyzing marketplace listings using AI (OpenAI GPT-4)</li>
+    <li>Searching for market prices (SerpApi)</li>
+    <li>Tracking usage for freemium limitations (5 free analyses)</li>
+    <li>Storing your preferences and settings</li>
+  </ul>
+
+  <h2>Data Storage</h2>
+  <p>
+    All data is stored locally using Chrome's <code>chrome.storage.local</code> API.
+    Your data remains on your device and is NOT sent to Deal Bandit servers.
+  </p>
+
+  <div class="highlight">
+    <strong>Important:</strong> API keys stored in Chrome's local storage are not encrypted by default.
+    Anyone with physical or remote access to your computer could potentially access these keys.
+    We recommend using API keys with spending limits and monitoring usage.
+  </div>
+
+  <h2>Third-Party Services</h2>
+  <p>Deal Bandit integrates with the following third-party services:</p>
+
+  <h3>OpenAI API</h3>
+  <ul>
+    <li>Purpose: AI-powered product analysis and price evaluation</li>
+    <li>Data Shared: Product titles, descriptions, prices, and images from marketplace listings</li>
+    <li>Privacy Policy: <a href="https://openai.com/privacy/" target="_blank">https://openai.com/privacy/</a></li>
+  </ul>
+
+  <h3>SerpApi</h3>
+  <ul>
+    <li>Purpose: Real-time market price searches</li>
+    <li>Data Shared: Product names and search queries</li>
+    <li>Privacy Policy: <a href="https://serpapi.com/privacy" target="_blank">https://serpapi.com/privacy</a></li>
+  </ul>
+
+  <h3>Facebook Marketplace</h3>
+  <ul>
+    <li>Purpose: Scraping product listing information</li>
+    <li>Data Collected: Publicly visible listing data (title, price, description, images)</li>
+    <li>Note: We convert publicly accessible images to base64 format for AI analysis</li>
+  </ul>
+
+  <h2>Data Security</h2>
+  <p>We implement the following security measures:</p>
+  <ul>
+    <li>All API keys remain on your local device</li>
+    <li>No data is transmitted to Deal Bandit servers</li>
+    <li>HTTPS is used for all external API communications</li>
+    <li>Error boundaries prevent sensitive data from appearing in error logs</li>
+  </ul>
+
+  <h2>Your Rights</h2>
+  <p>You have the right to:</p>
+  <ul>
+    <li>Delete all stored data by uninstalling the extension</li>
+    <li>Clear your API keys at any time through the settings</li>
+    <li>View what data is stored using Chrome's Developer Tools (chrome://extensions)</li>
+    <li>Opt out of the freemium model by not creating an account</li>
+  </ul>
+
+  <h2>Children's Privacy</h2>
+  <p>
+    Deal Bandit is not intended for users under the age of 13. We do not knowingly collect
+    personal information from children under 13.
+  </p>
+
+  <h2>Changes to This Policy</h2>
+  <p>
+    We may update this Privacy Policy from time to time. We will notify users of significant
+    changes by updating the "Last Updated" date at the top of this policy.
+  </p>
+
+  <h2>Contact Us</h2>
+  <p>
+    If you have questions about this Privacy Policy, please contact us at:<br>
+    Email: <a href="mailto:privacy@dealbandit.com">privacy@dealbandit.com</a><br>
+    GitHub: <a href="https://github.com/sebasgarciax96/dealbandit" target="_blank">github.com/sebasgarciax96/dealbandit</a>
+  </p>
+
+  <h2>Compliance</h2>
+  <p>This extension complies with:</p>
+  <ul>
+    <li>Chrome Web Store Developer Program Policies</li>
+    <li>General Data Protection Regulation (GDPR) principles</li>
+    <li>California Consumer Privacy Act (CCPA) requirements</li>
+  </ul>
+
+  <hr style="margin: 40px 0; border: 0; border-top: 1px solid #E5E7EB;">
+
+  <p style="text-align: center; color: #6B7280; font-size: 14px;">
+    Deal Bandit &copy; 2025. All rights reserved.
+  </p>
+</body>
+</html>

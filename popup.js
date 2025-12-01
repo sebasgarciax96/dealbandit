@@ -1,5 +1,8 @@
 // Popup script for Marketplace Deal Scanner - LIVE SEARCH MODE
 
+// FREEMIUM MODEL CONSTANTS
+const FREE_ANALYSIS_LIMIT = 5;
+
 // DOM elements
 const apiKeyInput = document.getElementById('apiKey');
 const serpApiKeyInput = document.getElementById('serpApiKey');
@@ -12,8 +15,207 @@ const keyStatus = document.getElementById('keyStatus');
 const setupCard = document.getElementById('setupCard');
 const settingsIcon = document.getElementById('settingsIcon');
 
+// Freemium modal elements
+const freemiumModal = document.getElementById('freemiumModal');
+const modalClose = document.getElementById('modalClose');
+const createAccountBtn = document.getElementById('createAccountBtn');
+const accountEmail = document.getElementById('accountEmail');
+const analysisCountDisplay = document.getElementById('analysisCount');
+
+// History elements
+const historyList = document.getElementById('historyList');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
 // Store identified product name for eBay search
 let identifiedProductName = null;
+
+// Helper function to safely inject content script
+async function ensureContentScriptInjected(tabId) {
+  try {
+    // Try to ping the content script
+    const response = await chrome.tabs.sendMessage(tabId, { action: 'ping' });
+    if (response && response.success) {
+      console.log('Content script already injected');
+      return true;
+    }
+  } catch (error) {
+    // Content script not injected, inject it
+    console.log('Injecting content script...');
+    await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      files: ['content.js']
+    });
+    // Wait a bit for injection to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return true;
+  }
+}
+
+// === FREEMIUM MODEL FUNCTIONS ===
+
+// Check if user has analyses remaining
+async function checkAnalysisLimit() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['analysisCount', 'hasAccount', 'userEmail'], (data) => {
+      const count = data.analysisCount || 0;
+      const hasAccount = data.hasAccount || false;
+
+      console.log('=== FREEMIUM CHECK ===');
+      console.log('Analysis count:', count);
+      console.log('Has account:', hasAccount);
+      console.log('User email:', data.userEmail);
+
+      if (hasAccount) {
+        // User has account, unlimited access
+        resolve({ allowed: true, count, hasAccount: true });
+      } else if (count >= FREE_ANALYSIS_LIMIT) {
+        // Free limit reached
+        resolve({ allowed: false, count, hasAccount: false });
+      } else {
+        // Within free limit
+        resolve({ allowed: true, count, hasAccount: false });
+      }
+    });
+  });
+}
+
+// Increment analysis count
+async function incrementAnalysisCount() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['analysisCount'], (data) => {
+      const newCount = (data.analysisCount || 0) + 1;
+      chrome.storage.local.set({ analysisCount: newCount }, () => {
+        console.log('Analysis count incremented to:', newCount);
+        resolve(newCount);
+      });
+    });
+  });
+}
+
+// Show freemium modal
+function showFreemiumModal(count) {
+  analysisCountDisplay.textContent = count;
+  freemiumModal.classList.remove('hidden');
+}
+
+// Hide freemium modal
+function hideFreemiumModal() {
+  freemiumModal.classList.add('hidden');
+}
+
+// === HISTORY FUNCTIONS ===
+
+// Save analysis to history
+async function saveToHistory(analysis, productName) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['analysisHistory'], (data) => {
+      const history = data.analysisHistory || [];
+
+      const historyItem = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        product: productName || analysis.exactProduct || 'Unknown Product',
+        analysis: analysis
+      };
+
+      // Add to beginning of array (most recent first)
+      history.unshift(historyItem);
+
+      // Limit to 20 most recent analyses
+      const trimmedHistory = history.slice(0, 20);
+
+      chrome.storage.local.set({ analysisHistory: trimmedHistory }, () => {
+        console.log('Saved to history:', historyItem.product);
+        resolve(trimmedHistory);
+      });
+    });
+  });
+}
+
+// Load and display history
+function loadHistory() {
+  chrome.storage.local.get(['analysisHistory'], (data) => {
+    const history = data.analysisHistory || [];
+
+    if (history.length === 0) {
+      historyList.innerHTML = `
+        <p style="color: #6B7280; font-size: 13px; text-align: center; padding: 20px;">
+          No analyses yet. Analyze your first product!
+        </p>
+      `;
+      return;
+    }
+
+    historyList.innerHTML = history.map(item => {
+      const date = new Date(item.timestamp);
+      const timeAgo = getTimeAgo(date);
+      const verdict = item.analysis.verdict || 'Unknown';
+      const verdictClass = (verdict.includes('Home Run') || verdict.includes('Strong Deal')) ? 'success' : 'warning';
+
+      return `
+        <div class="history-item" data-id="${item.id}">
+          <div class="history-item-header">
+            <div class="history-item-title">${item.product}</div>
+            <div class="history-item-verdict ${verdictClass}">${verdict}</div>
+          </div>
+          <div class="history-item-meta">
+            <span class="history-item-price">${item.analysis.askingPrice || 'N/A'}</span>
+            <span>${timeAgo}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Add click handlers to history items
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const itemId = parseInt(item.dataset.id);
+        const historyItem = history.find(h => h.id === itemId);
+        if (historyItem) {
+          viewHistoryItem(historyItem);
+        }
+      });
+    });
+  });
+}
+
+// View a history item
+function viewHistoryItem(historyItem) {
+  // Switch to Analyze tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.tab[data-tab="analyze"]').classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  document.getElementById('analyzeTab').classList.add('active');
+
+  // Display the analysis
+  displayResults(historyItem.analysis);
+
+  // Scroll to results
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Clear history
+function clearHistory() {
+  if (confirm('Are you sure you want to clear all analysis history?')) {
+    chrome.storage.local.set({ analysisHistory: [] }, () => {
+      console.log('History cleared');
+      loadHistory();
+      showSuccess('History cleared successfully');
+    });
+  }
+}
+
+// Helper function to get "time ago" string
+function getTimeAgo(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+
+  if (seconds < 60) return 'Just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+
+  return date.toLocaleDateString();
+}
 
 // Tab switching
 document.querySelectorAll('.tab').forEach(tab => {
@@ -27,12 +229,70 @@ document.querySelectorAll('.tab').forEach(tab => {
     // Show corresponding content
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     document.getElementById(`${tabName}Tab`).classList.add('active');
+
+    // Load history when History tab is clicked
+    if (tabName === 'history') {
+      loadHistory();
+    }
   });
 });
+
+// Clear history button
+clearHistoryBtn.addEventListener('click', clearHistory);
 
 // Settings icon toggles setup card
 settingsIcon.addEventListener('click', () => {
   setupCard.classList.toggle('hidden');
+});
+
+// === FREEMIUM MODAL EVENT LISTENERS ===
+
+// Close modal
+modalClose.addEventListener('click', () => {
+  hideFreemiumModal();
+});
+
+// Close modal when clicking outside
+freemiumModal.addEventListener('click', (e) => {
+  if (e.target === freemiumModal) {
+    hideFreemiumModal();
+  }
+});
+
+// Create account button
+createAccountBtn.addEventListener('click', async () => {
+  const email = accountEmail.value.trim();
+
+  if (!email) {
+    showError('Please enter your email address');
+    return;
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showError('Please enter a valid email address');
+    return;
+  }
+
+  // For MVP: Just store email and grant unlimited access
+  // Future: Send to backend API for proper account creation
+  chrome.storage.local.set({
+    hasAccount: true,
+    userEmail: email,
+    accountCreatedAt: new Date().toISOString()
+  }, () => {
+    console.log('Account created for:', email);
+    hideFreemiumModal();
+    showSuccess('Account created! You now have unlimited analyses.');
+
+    // TODO: In production, send email to backend API
+    // await fetch('https://your-api.com/create-account', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ email })
+    // });
+  });
 });
 
 // Expandable sections
@@ -53,11 +313,8 @@ ebayCompsBtn.addEventListener('click', async () => {
       throw new Error('No active tab found');
     }
 
-    // Inject content script to scrape title
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    });
+    // Ensure content script is injected
+    await ensureContentScriptInjected(tab.id);
 
     // Scrape the listing to get the title
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'scrape' });
@@ -197,6 +454,16 @@ saveKeyBtn.addEventListener('click', () => {
 
 // MAIN ANALYSIS FLOW - LIVE SEARCH MODE
 analyzeBtn.addEventListener('click', async () => {
+  // === FREEMIUM CHECK ===
+  const limitCheck = await checkAnalysisLimit();
+
+  if (!limitCheck.allowed) {
+    // Show freemium modal
+    console.log('Free limit reached, showing modal');
+    showFreemiumModal(limitCheck.count);
+    return;
+  }
+
   // Get API keys from storage
   const { openai_key, serp_key } = await chrome.storage.local.get(['openai_key', 'serp_key']);
 
@@ -221,11 +488,8 @@ analyzeBtn.addEventListener('click', async () => {
       throw new Error('No active tab found');
     }
 
-    // Inject content script
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    });
+    // Ensure content script is injected
+    await ensureContentScriptInjected(tab.id);
 
     // Send scrape message
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'scrape' });
@@ -259,29 +523,47 @@ analyzeBtn.addEventListener('click', async () => {
     }
 
     // === STEP 1: IDENTIFY PRODUCT ===
-    console.log('STEP 1: Identifying product...');
-    const productIdentification = await identifyProduct(openai_key, listingData);
-    console.log('Product identified:', productIdentification);
+    let productIdentification = null;
+    try {
+      console.log('STEP 1: Identifying product...');
+      productIdentification = await identifyProduct(openai_key, listingData);
+      console.log('Product identified:', productIdentification);
 
-    // Store for eBay comps button (Pro feature)
-    identifiedProductName = productIdentification;
+      // Store for eBay comps button (Pro feature)
+      identifiedProductName = productIdentification;
 
-    // Update eBay button to show it's using AI-identified name
-    if (ebayCompsBtn) {
-      ebayCompsBtn.innerHTML = `<span>Check eBay Sold Comps (AI: ${productIdentification.substring(0, 30)}${productIdentification.length > 30 ? '...' : ''})</span>`;
+      // Update eBay button to show it's using AI-identified name
+      if (ebayCompsBtn) {
+        ebayCompsBtn.innerHTML = `<span>Check eBay Sold Comps (AI: ${productIdentification.substring(0, 30)}${productIdentification.length > 30 ? '...' : ''})</span>`;
+      }
+    } catch (error) {
+      console.error('Product identification failed:', error);
+      // Fallback to listing title
+      productIdentification = listingData.title || 'Unknown Product';
+      showError('Product identification failed. Using listing title as fallback.');
     }
 
     // === STEP 2: LIVE SEARCH (if SerpApi key available) ===
     let livePrices = null;
     let newRetailData = null;
     if (serp_key) {
-      console.log('STEP 2A: Searching for NEW retail prices...');
-      newRetailData = await searchNewRetail(serp_key, productIdentification);
-      console.log('New retail data found:', newRetailData);
+      try {
+        console.log('STEP 2A: Searching for NEW retail prices...');
+        newRetailData = await searchNewRetail(serp_key, productIdentification);
+        console.log('New retail data found:', newRetailData);
+      } catch (error) {
+        console.error('New retail search failed:', error);
+        // Continue without retail data
+      }
 
-      console.log('STEP 2B: Searching for USED market prices...');
-      livePrices = await searchGoogleShopping(serp_key, productIdentification);
-      console.log('Used prices found:', livePrices);
+      try {
+        console.log('STEP 2B: Searching for USED market prices...');
+        livePrices = await searchGoogleShopping(serp_key, productIdentification);
+        console.log('Used prices found:', livePrices);
+      } catch (error) {
+        console.error('Used price search failed:', error);
+        // Continue without live prices
+      }
     } else {
       console.log('STEP 2: Skipped (no SerpApi key)');
     }
@@ -290,11 +572,20 @@ analyzeBtn.addEventListener('click', async () => {
     console.log('STEP 3: Generating final analysis...');
     const analysis = await generateFinalAnalysis(openai_key, listingData, productIdentification, livePrices, newRetailData);
 
+    // === INCREMENT ANALYSIS COUNT (only if not premium) ===
+    if (!limitCheck.hasAccount) {
+      const newCount = await incrementAnalysisCount();
+      console.log(`Analysis complete. Count: ${newCount}/${FREE_ANALYSIS_LIMIT}`);
+    }
+
     // Save analysis and identified product to storage
     chrome.storage.local.set({
       lastAnalysis: analysis,
       identifiedProduct: productIdentification
     });
+
+    // Save to history
+    await saveToHistory(analysis, productIdentification);
 
     // Display results
     displayResults(analysis);

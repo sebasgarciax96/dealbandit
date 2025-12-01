@@ -114,12 +114,19 @@
     </div>
   </div>
 
-  <!-- TAB CONTENT: History (Placeholder) -->
+  <!-- TAB CONTENT: History -->
   <div id="historyTab" class="tab-content">
     <div class="container">
       <div class="card">
-        <h2 class="card-title">Analysis History</h2>
-        <p style="color: #6B7280; font-size: 13px;">Coming soon...</p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 class="card-title" style="margin: 0;">Analysis History</h2>
+          <button class="btn-clear-history" id="clearHistoryBtn">Clear All</button>
+        </div>
+        <div id="historyList">
+          <p style="color: #6B7280; font-size: 13px; text-align: center; padding: 20px;">
+            No analyses yet. Analyze your first product!
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -130,6 +137,40 @@
       <span class="coffee-icon">☕</span>
       Buy me a coffee
     </a>
+  </div>
+
+  <!-- FREEMIUM MODAL -->
+  <div id="freemiumModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Unlock Unlimited Analyses</h2>
+        <span class="modal-close" id="modalClose">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p class="modal-message">You've used all 5 free product analyses! 🎉</p>
+        <p class="modal-subtitle">Create a free account to continue analyzing deals.</p>
+
+        <div class="usage-stats">
+          <div class="stat-item">
+            <span class="stat-number" id="analysisCount">5</span>
+            <span class="stat-label">Analyses Used</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="accountEmail">Email Address</label>
+          <input type="email" id="accountEmail" placeholder="your@email.com" required>
+        </div>
+
+        <button class="btn btn-primary" id="createAccountBtn">
+          Create Free Account
+        </button>
+
+        <p class="modal-footer-text">
+          By creating an account, you agree to our Terms of Service and Privacy Policy.
+        </p>
+      </div>
+    </div>
   </div>
 
   <script src="popup.js"></script>
