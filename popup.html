@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deal Bandit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- HEADER: Fixed top bar, black background -->
+  <div class="header">
+    <div class="header-left">
+      <img src="logo.png" alt="Deal Bandit" class="logo">
+      <div class="brand-name">Deal Bandit</div>
+    </div>
+    <div class="settings-icon" id="settingsIcon">⋮</div>
+  </div>
+
+  <!-- TABS: Segmented control -->
+  <div class="tabs">
+    <div class="tab active" data-tab="analyze">Analyze Listing</div>
+    <div class="tab" data-tab="history">History</div>
+  </div>
+
+  <!-- TAB CONTENT: Analyze Listing -->
+  <div id="analyzeTab" class="tab-content active">
+    <div class="container">
+
+      <!-- SETUP CARD: Shows if API keys are missing -->
+      <div id="setupCard" class="card setup-card hidden">
+        <div class="setup-header">
+          <span class="icon">!</span>
+          <div class="setup-title">Setup Required</div>
+        </div>
+        <div class="input-group">
+          <label for="apiKey">OpenAI API Key</label>
+          <input type="password" id="apiKey" placeholder="sk-...">
+        </div>
+        <div class="input-group">
+          <label for="serpApiKey">SerpApi Key (Optional)</label>
+          <input type="password" id="serpApiKey" placeholder="Your SerpApi key">
+        </div>
+        <button class="btn btn-secondary" id="saveKey">Save Keys</button>
+        <div class="status" id="keyStatus">No API keys saved</div>
+      </div>
+
+      <!-- MAIN CARD: Hero action card -->
+      <div class="card">
+        <h2 class="card-title">Analyze Current Product</h2>
+        <button class="btn btn-primary" id="analyzeBtn">
+          <span>Run Analysis</span>
+          <span class="btn-icon-box">→</span>
+        </button>
+        <button class="btn btn-outline" id="ebayCompsBtn">
+          <span>Check eBay Sold Comps</span>
+        </button>
+      </div>
+
+      <!-- SPINNER -->
+      <div class="spinner" id="spinner">
+        <div class="spinner-icon"></div>
+        <div class="spinner-text">Analyzing listing...</div>
+      </div>
+
+      <!-- RESULTS AREA -->
+      <div id="result">
+        <!-- Results List -->
+        <div class="results-list" id="resultsList">
+          <!-- Dynamic rows will be inserted here -->
+        </div>
+
+        <!-- Expandable: Deal Breakdown -->
+        <div class="expandable" id="imageInsightsSection">
+          <div class="expandable-header">
+            <span class="expandable-title">Deal Breakdown</span>
+            <span class="expandable-icon">▼</span>
+          </div>
+          <div class="expandable-content">
+            <div class="expandable-body" id="imageInsights"></div>
+          </div>
+        </div>
+
+        <!-- Expandable: Market Research -->
+        <div class="expandable" id="marketResearchSection">
+          <div class="expandable-header">
+            <span class="expandable-title">Market Research</span>
+            <span class="expandable-icon">▼</span>
+          </div>
+          <div class="expandable-content">
+            <div class="expandable-body" id="marketResearch"></div>
+          </div>
+        </div>
+
+        <!-- Expandable: Context -->
+        <div class="expandable" id="contextSection">
+          <div class="expandable-header">
+            <span class="expandable-title">Market Context</span>
+            <span class="expandable-icon">▼</span>
+          </div>
+          <div class="expandable-content">
+            <div class="expandable-body" id="context"></div>
+          </div>
+        </div>
+
+        <!-- Message Card -->
+        <div class="message-card">
+          <div class="message-label">Negotiation Message</div>
+          <div class="message-box" id="msgBox"></div>
+          <button class="btn-copy" id="copyBtn">Copy Message</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB CONTENT: History (Placeholder) -->
+  <div id="historyTab" class="tab-content">
+    <div class="container">
+      <div class="card">
+        <h2 class="card-title">Analysis History</h2>
+        <p style="color: #6B7280; font-size: 13px;">Coming soon...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <a href="https://www.buymeacoffee.com/sebasgarciax" class="footer-link" target="_blank" rel="noopener noreferrer">
+      <span class="coffee-icon">☕</span>
+      Buy me a coffee
+    </a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

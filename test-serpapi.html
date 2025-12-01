@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SerpApi Test</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #0f1115;
+      color: white;
+    }
+    button {
+      padding: 10px 20px;
+      background: #1877f2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    pre {
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>SerpApi Connection Test</h1>
+  <button onclick="testSearch()">Test Search: "IKEA BJURSTA table used price"</button>
+  <div id="result"></div>
+
+  <script>
+    const API_KEY = '60c9e87b14e1484a755bbbc58bfdcbce744d7ac91d2e91a39fa4c30b1bea2678';
+
+    async function testSearch() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '<p>Searching...</p>';
+
+      try {
+        const query = 'IKEA BJURSTA table used price';
+        const url = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=${API_KEY}&num=10`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Format results
+        let html = '<h2>✓ SerpApi Connected Successfully!</h2>';
+
+        html += '<h3>Shopping Results:</h3><pre>';
+        if (data.shopping_results && data.shopping_results.length > 0) {
+          data.shopping_results.slice(0, 5).forEach(r => {
+            html += `${r.title}\n`;
+            html += `Price: ${r.price || 'N/A'}\n`;
+            html += `Source: ${r.source}\n\n`;
+          });
+        } else {
+          html += 'No shopping results found\n';
+        }
+        html += '</pre>';
+
+        html += '<h3>Organic Results:</h3><pre>';
+        if (data.organic_results && data.organic_results.length > 0) {
+          data.organic_results.slice(0, 3).forEach(r => {
+            html += `${r.title}\n`;
+            html += `${r.snippet || ''}\n\n`;
+          });
+        } else {
+          html += 'No organic results found\n';
+        }
+        html += '</pre>';
+
+        html += '<h3>Raw Data:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+
+        resultDiv.innerHTML = html;
+
+      } catch (error) {
+        resultDiv.innerHTML = `<h2 style="color: #ef4444;">✗ Error</h2><pre>${error.message}</pre>`;
+      }
+    }
+  </script>
+</body>
+</html>
